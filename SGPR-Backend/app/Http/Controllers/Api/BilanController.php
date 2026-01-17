@@ -54,8 +54,8 @@ class BilanController extends Controller
             return response()->json(['error' => 'Non autorisé'], 403);
         }
 
-        if ($bilan->etat_validation !== 'Brouillon' || !$bilan->etat_validation !== 'Rejeté') {
-            return response()->json(['error' => 'Ce bilan a déjà été soumis ou validé.'], 400);
+        if (!in_array($bilan->etat_validation, ['Brouillon', 'Rejeté'])) {
+        return response()->json(['error' => 'Ce bilan ne peut pas être soumis (déjà validé ou en cours).'], 400);
         }
 
         $bilan->update([

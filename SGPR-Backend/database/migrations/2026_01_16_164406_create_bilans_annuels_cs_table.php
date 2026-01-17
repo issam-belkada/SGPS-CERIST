@@ -20,7 +20,7 @@ return new class extends Migration
     $table->text('synthese_nationale_scientifique');
     $table->text('recommandations_strategiques');
     
-    $table->enum('etat', ['En_cours', 'Finalisé', 'Publié'])->default('En_cours');
+    $table->enum('etat', ['Brouillon', 'Soumis'])->default('Brouillon');
     $table->foreignId('responsable_cs_id')->constrained('users');
     $table->timestamps();
 });

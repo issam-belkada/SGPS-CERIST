@@ -15,7 +15,7 @@ return new class extends Migration
     $table->id();
     $table->foreignId('session_id')->constrained('sessions_cs');
     $table->foreignId('projet_id')->constrained('projets');
-    $table->enum('avis', ['Favorable', 'Favorable_sous_reserve', 'Défavorable']);
+    $table->enum('avis', ['Favorable','Terminé', 'Défavorable']);
     $table->text('observations')->nullable();
     $table->timestamps();
 });
