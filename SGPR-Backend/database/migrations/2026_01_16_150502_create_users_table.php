@@ -19,8 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->enum('grade', ['PR', 'MCA', 'MCB', 'MAA', 'MAB', 'DR', 'MRA', 'MRB', 'CR', 'AR', 'Ingénieur', 'TS']);
             $table->string('specialite');
-            $table->foreignId('division_id')->constrained();
-            $table->enum('role', ['Chercheur', 'ChefProjet', 'ChefDivision', 'ChefCS', 'Admin']);
+            $table->foreignId('division_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
 

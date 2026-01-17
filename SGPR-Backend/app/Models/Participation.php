@@ -16,7 +16,7 @@ class Participation extends Pivot
         'qualite' // permanent, associé, collaborateur, étudiant
     ];
 
-    // Optionnel : Vous pouvez ajouter des relations si vous voulez 
+    // Optionnel : Vous pouvez ajouter des relations si vous voulez
     // accéder directement au projet ou à l'utilisateur depuis cet objet
     public function projet()
     {
