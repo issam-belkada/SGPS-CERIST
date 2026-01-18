@@ -3,13 +3,16 @@ import { Link } from "react-router-dom";
 import axiosClient from "../../api/axios";
 import { 
   Edit, Trash2, UserPlus, Mail, Shield, 
-  MapPin, Loader2, Search, Eye 
+  MapPin, Loader2, Search, Eye, AlertCircle 
 } from "lucide-react";
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // État pour la modal de suppression
+  const [deleteModal, setDeleteModal] = useState({ show: false, user: null });
 
   useEffect(() => {
     fetchUsers();
@@ -25,8 +28,13 @@ export default function UserList() {
       .catch(() => setLoading(false));
   };
 
-  const deleteUser = (user) => {
-    if (!window.confirm(`Voulez-vous vraiment supprimer ${user.nom}?`)) return;
+  const openDeleteModal = (user) => {
+    setDeleteModal({ show: true, user });
+  };
+
+  const confirmDelete = () => {
+    const { user } = deleteModal;
+    setDeleteModal({ show: false, user: null });
     
     axiosClient.delete(`/users/${user.id}`)
       .then(() => fetchUsers())
@@ -49,7 +57,37 @@ export default function UserList() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      
+      {/* MODAL DE CONFIRMATION DE SUPPRESSION */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={32} />
+            </div>
+            <h3 className="text-xl font-black text-slate-800 mb-2">Supprimer le compte ?</h3>
+            <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+              Êtes-vous sûr de vouloir supprimer <span className="font-bold text-slate-800">{deleteModal.user?.nom} {deleteModal.user?.prenom}</span> ? Cette action est irréversible.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setDeleteModal({ show: false, user: null })}
+                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-all"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg shadow-red-100 transition-all active:scale-95"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800">Gestion des Chercheurs</h1>
@@ -135,7 +173,6 @@ export default function UserList() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          {/* Lien vers Details */}
                           <Link 
                             to={`/admin/users/${u.id}`}
                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
@@ -143,7 +180,6 @@ export default function UserList() {
                           >
                             <Eye size={18} />
                           </Link>
-                          {/* Lien vers Edition */}
                           <Link 
                             to={`/admin/users/${u.id}/edit`}
                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
@@ -152,7 +188,7 @@ export default function UserList() {
                             <Edit size={18} />
                           </Link>
                           <button 
-                            onClick={() => deleteUser(u)}
+                            onClick={() => openDeleteModal(u)}
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             title="Supprimer"
                           >

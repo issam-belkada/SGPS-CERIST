@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     Route::apiResource('projets', ProjetController::class);
+    Route::get('/chercheur/projets', [ProjetController::class, 'myProjects']);
     
     // Transitions du workflow
     Route::patch('/projets/{projet}/valider-division', [ProjetController::class, 'validerParDivision'])->middleware('can:valider-projet-division');
@@ -106,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/divisions/{division}', [AdminController::class, 'showDivision']);
     Route::put('/divisions/{division}', [AdminController::class, 'updateDivision']);
     Route::delete('/divisions/{division}', [AdminController::class, 'destroyDivision']);
+    Route::put('/divisions/{division}/assign-chef', [AdminController::class, 'assignChef']);
 
     Route::get('/admin/statistics', [AdminController::class, 'getStatistics']);
 

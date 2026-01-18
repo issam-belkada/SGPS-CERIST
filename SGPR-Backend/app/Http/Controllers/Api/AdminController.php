@@ -8,6 +8,7 @@ use App\Models\Division;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -108,9 +109,10 @@ class AdminController extends Controller
     /** --- GESTION DES DIVISIONS --- **/
 
     public function indexDivisions()
-    {
-        return response()->json(Division::withCount('users')->get());
-    }
+{
+    // On charge le chef ET le compte des utilisateurs
+    return response()->json(Division::with('chef')->withCount('users')->get());
+}
 
     public function storeDivision(Request $request)
     {
@@ -125,9 +127,10 @@ class AdminController extends Controller
     }
 
     public function showDivision(Division $division)
-    {
-        return response()->json($division->load('users.roles'));
-    }
+{
+    // On charge les membres ET le chef spécifique
+    return response()->json($division->load(['users.roles', 'chef']));
+}
 
     public function updateDivision(Request $request, Division $division)
     {
@@ -157,17 +160,35 @@ class AdminController extends Controller
 
     public function assignChef(Request $request, Division $division)
 {
-    $request->validate(['chef_id' => 'required|exists:users,id']);
+    $request->validate([
+        'chef_id' => 'required|exists:users,id'
+    ]);
 
-    // 1. Mettre à jour le chef dans la table divisions
+    // 1. Trouver l'ancien chef (si il existe)
+    $oldChefId = $division->chef_id;
+
+    if ($oldChefId) {
+        $oldChef = User::find($oldChefId);
+        if ($oldChef) {
+            // On lui retire le rôle de Chef et on lui remet le rôle par défaut 'Chercheur'
+            $oldChef->syncRoles(['Chercheur']);
+        }
+    }
+
+    // 2. Mettre à jour la table divisions avec le nouvel ID
     $division->chef_id = $request->chef_id;
     $division->save();
 
-    // 2. Mettre à jour le rôle Spatie de l'utilisateur
-    $user = User::find($request->chef_id);
-    $user->syncRoles(['ChefDivision']);
+    // 3. Donner le rôle ChefDivision au nouvel élu
+    $newChef = User::find($request->chef_id);
+    if ($newChef) {
+        $newChef->syncRoles(['ChefDivision']);
+    }
 
-    return response()->json(['message' => 'Chef assigné avec succès']);
+    return response()->json([
+        'message' => 'Le transfert de responsabilité a été effectué avec succès.',
+        'chef' => $newChef->nom . ' ' . $newChef->prenom
+    ]);
 }
 
 
@@ -177,20 +198,40 @@ class AdminController extends Controller
     /** Statistiques du Dashboard */
     public function getStatistics()
     {
-        try {
-            return response()->json([
-                'totalUsers' => User::count(),
-                'totalDivisions' => Division::count(),
-                'adminsCount' => User::role('Admin')->count(), 
-                'recentUsers' => User::orderBy('created_at', 'desc')
-                                    ->take(5)
-                                    ->get(['nom', 'prenom', 'grade']),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Erreur statistiques',
-                'message' => $e->getMessage()
-            ], 500);
+        // 1. Statistiques Globales
+        $totalUsers = User::count();
+        $totalDivisions = Division::count();
+        $adminsCount = User::role('Admin')->count(); // Si vous utilisez Spatie
+
+        // 2. Nouveaux membres récents (les 5 derniers)
+        $recentUsers = User::with('roles')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // 3. Données pour le graphique (6 derniers mois)
+        $months = collect();
+        $data = collect();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months->push($date->format('M')); // Nom du mois (Jan, Feb...)
+
+            $count = User::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+            $data->push($count);
         }
+
+        return response()->json([
+            'totalUsers' => $totalUsers,
+            'totalDivisions' => $totalDivisions,
+            'adminsCount' => $adminsCount,
+            'recentUsers' => $recentUsers,
+            'chart' => [
+                'labels' => $months,
+                'datasets' => $data
+            ]
+        ]);
     }
 }

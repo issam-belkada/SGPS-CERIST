@@ -40,6 +40,15 @@ class ProjetController extends Controller
         return response()->json($projets);
     }
 
+
+    public function myProjects(Request $request) {
+    // Récupère les projets où l'utilisateur est soit le chef soit un membre
+    return $request->user()->projets()->withCount('membres')->get();
+    }
+
+
+
+
     /**
      * Soumission d'une nouvelle proposition (Règle : 1 seul projet supervisé actif).
      */
@@ -201,4 +210,5 @@ class ProjetController extends Controller
 
         return response()->json(['message' => 'Membre retiré de l\'équipe.']);
     }
+
 }

@@ -9,20 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('divisions', function (Blueprint $table) {
-            //
-        });
-    }
+    public function up(): void {
+    Schema::table('divisions', function (Blueprint $table) {
+        $table->foreignId('chef_id')->nullable()->constrained('users')->onDelete('set null');
+        $table->text('description')->nullable();
+    });
+}
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('divisions', function (Blueprint $table) {
-            //
-        });
-    }
+public function down(): void {
+    Schema::table('divisions', function (Blueprint $table) {
+        $table->dropForeign(['chef_id']);
+        $table->dropColumn('chef_id');
+        $table->dropColumn('description');
+    });
+}
 };
