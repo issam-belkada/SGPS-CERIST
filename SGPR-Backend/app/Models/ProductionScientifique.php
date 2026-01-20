@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductionScientifique extends Model
 {
     use HasFactory;
+    protected $table = 'productions_scientifiques';
 
     protected $fillable = [
         'bilan_id',

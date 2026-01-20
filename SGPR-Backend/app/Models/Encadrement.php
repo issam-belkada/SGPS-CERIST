@@ -12,7 +12,7 @@ class Encadrement extends Model
     protected $fillable = [
         'bilan_id',
         'nom_etudiant',
-        'type_diplome', // Doctorat, Master, PFE...
+        'type_diplome', 
         'sujet',
         'etablissement',
         'etat_avancement' // En cours, Soutenu

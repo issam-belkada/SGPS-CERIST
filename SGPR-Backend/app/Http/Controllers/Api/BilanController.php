@@ -20,18 +20,18 @@ class BilanController extends Controller
     }
 
     $validated = $request->validate([
-        'annee' => 'required|integer',
-        'avancement_physique' => 'nullable|numeric|min:0|max:100',
-        'objectifs_realises' => 'nullable|string',
-        'collaborations' => 'nullable|string',
-        'diff_scientifiques' => 'nullable|string',
-        'diff_materielles' => 'nullable|string',
-        'diff_humaines' => 'nullable|string',
-        'autres_resultats' => 'nullable|string',
-        'productions_sci' => 'array',
-        'productions_tech' => 'array',
-        'encadrements' => 'array',
-    ]);
+    'annee' => 'required|integer',
+    'avancement_physique' => 'nullable|numeric|min:0|max:100',
+    'objectifs_realises' => 'nullable|string',
+    'collaborations' => 'nullable|string',
+    'difficultes_scientifiques' => 'nullable|string',
+    'difficultes_materielles' => 'nullable|string',
+    'difficultes_humaines' => 'nullable|string',
+    'autres_resultats' => 'nullable|string',
+    'productions_sci' => 'array',
+    'productions_tech' => 'array',
+    'encadrements' => 'array',
+]);
 
     return DB::transaction(function () use ($projet, $validated) {
         // 1. Mise à jour ou création du bilan (Sections 3, 5, 6)

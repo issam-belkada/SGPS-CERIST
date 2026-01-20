@@ -9,6 +9,7 @@ class ProductionTechnologique extends Model
 {
     use HasFactory;
 
+    protected $table = 'productions_technologiques';
     protected $fillable = [
         'bilan_id',
         'type', // Logiciel, Produit, Brevet, Prototype
