@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Division;
+use App\Models\Projet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -203,6 +204,7 @@ class AdminController extends Controller
         $totalUsers = User::count();
         $totalDivisions = Division::count();
         $adminsCount = User::role('Admin')->count(); // Si vous utilisez Spatie
+        $projectsCount = Projet::count();
 
         // 2. Nouveaux membres récents (les 5 derniers)
         $recentUsers = User::with('roles')
@@ -228,6 +230,7 @@ class AdminController extends Controller
             'totalUsers' => $totalUsers,
             'totalDivisions' => $totalDivisions,
             'adminsCount' => $adminsCount,
+            'projectsCount' => $projectsCount,
             'recentUsers' => $recentUsers,
             'chart' => [
                 'labels' => $months,

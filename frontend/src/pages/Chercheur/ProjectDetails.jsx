@@ -4,8 +4,8 @@ import axiosClient from "../../api/axios";
 import { 
   FolderKanban, FileCheck, Info, Calendar, CheckCircle2, 
   Clock, FileText, User as UserIcon, AlertCircle, 
-  Loader2, Lock, LayoutGrid, Download, ArrowRight,
-  UploadCloud, Settings, Users, PlusCircle, Edit3, ShieldCheck
+  Loader2, Lock, Download, ArrowRight,
+  Users, PlusCircle, ShieldCheck
 } from "lucide-react";
 
 // Import des modales
@@ -77,7 +77,12 @@ export default function ProjectDetails() {
     </div>
   );
 
-  if (!projet) return <div className="p-10 text-center"><AlertCircle className="mx-auto text-red-500 mb-4" size={48} /><p>Projet introuvable.</p></div>;
+  if (!projet) return (
+    <div className="p-10 text-center">
+        <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
+        <p>Projet introuvable.</p>
+    </div>
+  );
 
   const livrablesRemplis = (projet.all_livrables || []).filter(l => l.fichier_path !== 'waiting_upload');
 
@@ -118,9 +123,20 @@ export default function ProjectDetails() {
                 </div>
 
                 {isChefDeProjet && (
-                    <div className="flex gap-2">
-                        <button onClick={() => setShowWPModal(true)}
-                                className="flex-1 px-6 bg-slate-900 text-white rounded-[1.5rem] hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center gap-2 text-[10px] font-black uppercase whitespace-nowrap">
+                    <div className="flex flex-wrap gap-2">
+                        {/* BOUTON BILAN ANNUEL */}
+                        <button 
+                            onClick={() => navigate(`/chercheur/projets/${id}/bilan`)}
+                            className="flex-1 px-6 bg-emerald-600 text-white rounded-[1.5rem] hover:bg-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2 text-[10px] font-black uppercase whitespace-nowrap"
+                        >
+                            <FileText size={18}/> Bilan Annuel
+                        </button>
+
+                        {/* BOUTON NOUVEAU WP */}
+                        <button 
+                            onClick={() => setShowWPModal(true)}
+                            className="flex-1 px-6 bg-slate-900 text-white rounded-[1.5rem] hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center gap-2 text-[10px] font-black uppercase whitespace-nowrap"
+                        >
                             <PlusCircle size={18}/> Nouveau WP
                         </button>
                     </div>
@@ -161,9 +177,21 @@ export default function ProjectDetails() {
       <div className="transition-all duration-500">
         {activeTab === "overview" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-6">
-                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-3"><FileText className="text-indigo-500" /> Problématique</h3>
-                    <p className="text-slate-600 text-lg leading-relaxed">{projet.problematique}</p>
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-black text-slate-800 flex items-center gap-3"><FileText className="text-indigo-500" /> Problématique</h3>
+                            {isChefDeProjet && (
+                                <button 
+                                    onClick={() => navigate(`/chercheur/projets/${id}/bilan`)}
+                                    className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full hover:bg-emerald-100 transition-all border border-emerald-100"
+                                >
+                                    Consulter le bilan
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-slate-600 text-lg leading-relaxed">{projet.problematique}</p>
+                    </div>
                 </div>
                 <div className="bg-indigo-900 p-10 rounded-[3rem] text-white">
                     <h3 className="text-xl font-black mb-4">Objectifs</h3>
@@ -197,7 +225,7 @@ export default function ProjectDetails() {
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isMyTask ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
                                                 {tache.etat === 'Terminé' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
                                             </div>
-                                            {isMyTask ? <ArrowRight size={18} /> : isChefDeProjet ? <Settings size={16} className="text-slate-400" /> : <Lock size={16} />}
+                                            {isMyTask ? <ArrowRight size={18} /> : isChefDeProjet ? <PlusCircle size={16} className="text-slate-400" /> : <Lock size={16} />}
                                         </div>
                                         <h5 className="font-black text-sm text-slate-800">{tache.nom}</h5>
                                         <p className="text-[9px] text-slate-400 mt-2 uppercase font-bold tracking-wider">Responsable: {tache.responsable?.nom || 'Non assigné'}</p>

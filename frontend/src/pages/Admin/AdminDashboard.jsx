@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           { label: "Chercheurs", val: stats?.totalUsers, icon: <Users size={22}/>, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Divisions", val: stats?.totalDivisions, icon: <Building2 size={22}/>, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Admins", val: stats?.adminsCount, icon: <UserCheck size={22}/>, color: "text-purple-600", bg: "bg-purple-50" },
-          { label: "Projets", val: "24", icon: <TrendingUp size={22}/>, color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "Projets", val: stats?.projectsCount, icon: <TrendingUp size={22}/>, color: "text-orange-600", bg: "bg-orange-50" },
         ].map((c, i) => (
           <div key={i} className="bg-white p-7 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group">
             <div className={`w-12 h-12 ${c.bg} ${c.color} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>

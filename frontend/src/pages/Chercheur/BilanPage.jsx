@@ -15,12 +15,12 @@ const BilanPage = () => {
         const fetchData = async () => {
             try {
                 // 1. Charger les détails du projet pour le contexte
-                const resProjet = await axios.get(`/api/projets/${id}`);
+                const resProjet = await axios.get(`projets/${id}`);
                 setProjet(resProjet.data);
 
                 // 2. Tenter de charger un bilan existant (brouillon) pour l'année en cours
                 const anneeCourante = new Date().getFullYear();
-                const resBilan = await axios.get(`/api/projets/${id}/bilans/${anneeCourante}`);
+                const resBilan = await axios.get(`projets/${id}/bilans/${anneeCourante}`);
                 
                 if (resBilan.data) {
                     setInitialData(resBilan.data);

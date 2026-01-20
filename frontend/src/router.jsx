@@ -87,7 +87,7 @@ const router = createBrowserRouter([
       { path: "ma-division", element: <MaDivision /> },
       { path: 'taches/:id', element: <TacheDetails /> },
         { path: "taches/:id/ajouter-livrable", element: <LivrableModal /> },
-        { path: "projet/:id/bilan" , element: <BilanPage/> },
+        { path: "projets/:id/bilan" , element: <BilanPage/> },
     ],
   },
 

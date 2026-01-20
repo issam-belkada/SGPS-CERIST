@@ -28,7 +28,6 @@ class BilanController extends Controller
         'diff_materielles' => 'nullable|string',
         'diff_humaines' => 'nullable|string',
         'autres_resultats' => 'nullable|string',
-        // Ajout des validations pour les relations
         'productions_sci' => 'array',
         'productions_tech' => 'array',
         'encadrements' => 'array',
