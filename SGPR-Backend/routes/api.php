@@ -48,11 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/work-packages/{wp}/taches', [WorkPackageController::class, 'ajouterTache']);
     Route::get('/mes-taches', [TacheController::class, 'mesTaches']);
     Route::get('/taches/{id}', [TacheController::class, 'show']);
-    Route::post('/taches/{tache}/update-status', [TacheController::class, 'update']);
+    Route::post('/taches/{tache}/update-status', [TacheController::class, 'updateStatus']);
 
     Route::post('/livrables/store-tache', [LivrableController::class, 'storeFromTache']);
     Route::delete('/livrables/{livrable}', [LivrableController::class, 'destroy']);
     Route::get('/livrables/{livrable}/download', [LivrableController::class, 'download']);
+    Route::post('/livrables/{id}/upload-missing', [LivrableController::class, 'updateMissingLivrable']);
 
     // Productions Scientifiques & Tech
     Route::get('/bilans/{bilan}/productions-tech', [ProductionTechnologiqueController::class, 'index']);

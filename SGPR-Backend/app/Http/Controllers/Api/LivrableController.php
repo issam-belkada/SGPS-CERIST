@@ -55,7 +55,7 @@ class LivrableController extends Controller
     $request->validate([
         'tache_id' => 'required|exists:taches,id',
         'titre' => 'required|string|max:255',
-        'type' => 'required|in:Rapport_Technique,Manuel_Utilisateur,Code_Source,Synthese_Biblio,Expertise',
+        'type' => 'required|in:Rapport_Technique,Manuel_Utilisateur,Code_Source,Synthese_Biblio,Expertise,Logiciel_Code,Prototype,Publication,Brevet,Autre',
         'fichier' => 'required|file|max:20480', // Max 20Mo
     ]);
 
@@ -82,6 +82,45 @@ class LivrableController extends Controller
     }
 
     return response()->json(['message' => 'Fichier manquant'], 400);
+}
+
+
+
+
+     public function updateMissingLivrable(Request $request, $id)
+{
+    // 1. Validation (Titre optionnel car déjà défini par le CP, mais on laisse la liberté)
+    $request->validate([
+        'titre' => 'sometimes|required|string|max:255',
+        'type' => 'required|in:Rapport_Technique,Manuel_Utilisateur,Code_Source,Synthese_Biblio,Expertise,Logiciel_Code,Prototype,Publication,Brevet,Autre',
+        'fichier' => 'required|file|max:20480', // 20Mo
+    ]);
+
+    // 2. Trouver le livrable spécifique
+    $livrable = Livrable::findOrFail($id);
+
+    // Sécurité : Vérifier s'il appartient bien à la tâche
+    if ($livrable->tache_id != $request->tache_id) {
+        return response()->json(['message' => 'Action non autorisée'], 403);
+    }
+
+    // 3. Stockage du fichier
+    if ($request->hasFile('fichier')) {
+        // On récupère le projetId via la relation
+        $projetId = $livrable->projet_id;
+        $path = $request->file('fichier')->store('livrables/projet_' . $projetId);
+
+        // 4. Mise à jour au lieu de Création
+        $livrable->update([
+            'titre' => $request->titre ?? $livrable->titre,
+            'type' => $request->type ?? $livrable->type,
+            'fichier_path' => $path,
+            'date_depot' => now(),
+            'depose_par' => auth()->id() // Celui qui fait l'upload devient le dépositaire
+        ]);
+
+        return response()->json($livrable, 200);
+    }
 }
 
 

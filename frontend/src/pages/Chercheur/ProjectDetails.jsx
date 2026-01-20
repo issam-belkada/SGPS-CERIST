@@ -4,8 +4,13 @@ import axiosClient from "../../api/axios";
 import { 
   FolderKanban, FileCheck, Info, Calendar, CheckCircle2, 
   Clock, FileText, User as UserIcon, AlertCircle, 
-  Loader2, Lock, LayoutGrid, Download, Eye, ArrowRight
+  Loader2, Lock, LayoutGrid, Download, ArrowRight,
+  UploadCloud, Settings, Users, PlusCircle, Edit3
 } from "lucide-react";
+
+// Import des nouvelles modales
+import WorkPackageModal from "./WorkPackageModal";
+import TacheModal from "./TacheModal";
 
 export default function ProjectDetails() {
   const { id } = useParams();
@@ -14,7 +19,12 @@ export default function ProjectDetails() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const user = JSON.parse(localStorage.getItem('user'));
+  // États pour les modales
+  const [showWPModal, setShowWPModal] = useState(false);
+  const [showTacheModal, setShowTacheModal] = useState(null); // contiendra l'objet WP cible
+
+  const userString = localStorage.getItem('user') || localStorage.getItem('USER');
+  const user = userString ? JSON.parse(userString) : null;
   const myId = user?.id;
 
   const fetchProjectDetails = async () => {
@@ -33,7 +43,14 @@ export default function ProjectDetails() {
     fetchProjectDetails();
   }, [id]);
 
-  // Fonction pour télécharger le PDF
+  // --- LOGIQUE DE ROLE ET PROGRESSION ---
+  const isChefDeProjet = Number(myId) === Number(projet?.chef_projet_id);
+  
+  const allTaches = projet?.work_packages?.flatMap(wp => wp.taches) || [];
+  const totalTaches = allTaches.length;
+  const tachesTerminees = allTaches.filter(t => t.etat === 'Terminé').length;
+  const progression = totalTaches > 0 ? Math.round((tachesTerminees / totalTaches) * 100) : 0;
+
   const handleDownload = async (livrable) => {
     try {
       const response = await axiosClient.get(`/livrables/${livrable.id}/download`, {
@@ -47,26 +64,26 @@ export default function ProjectDetails() {
       link.click();
       link.remove();
     } catch (err) {
-      alert("Erreur lors du téléchargement du fichier.");
+      alert("Erreur lors du téléchargement.");
     }
   };
 
   if (loading) return (
     <div className="h-screen flex flex-col items-center justify-center bg-slate-50/50">
-      <div className="relative flex items-center justify-center">
-        <div className="absolute w-16 h-16 border-4 border-indigo-100 rounded-full"></div>
-        <Loader2 className="animate-spin text-indigo-600 relative" size={32} />
-      </div>
-      <p className="mt-4 text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Initialisation</p>
+      <Loader2 className="animate-spin text-indigo-600" size={32} />
+      <p className="mt-4 text-slate-400 font-black text-[10px] uppercase tracking-widest">Initialisation</p>
     </div>
   );
 
   if (!projet) return <div className="p-10 text-center"><AlertCircle className="mx-auto text-red-500 mb-4" size={48} /><p>Projet introuvable.</p></div>;
 
+  const livrablesRemplis = (projet.all_livrables || []).filter(l => l.fichier_path !== 'waiting_upload');
+  const livrablesEnAttente = (projet.all_livrables || []).filter(l => l.fichier_path === 'waiting_upload');
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
       
-      {/* HEADER PREMIUM */}
+      {/* HEADER AVEC ACTIONS CP ET PROGRESSION */}
       <div className="bg-white rounded-[3rem] p-10 shadow-xl shadow-slate-200/50 border border-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         
@@ -80,77 +97,67 @@ export default function ProjectDetails() {
                 <span className={`px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 ${
                   projet.statut === 'enCours' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
                 }`}>
-                  <span className={`w-2 h-2 rounded-full ${projet.statut === 'enCours' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`}></span>
                   {projet.statut}
                 </span>
               </div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                {projet.titre}
-              </h1>
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">{projet.titre}</h1>
             </div>
 
-            {/* Statistiques Rapides */}
-            <div className="bg-slate-50 p-6 rounded-[2rem] flex gap-8 items-center border border-slate-100">
-              <div className="text-center">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Tâches</p>
-                <p className="text-xl font-black text-slate-800">
-                  {projet.work_packages?.reduce((acc, wp) => acc + (wp.taches?.length || 0), 0)}
-                </p>
-              </div>
-              <div className="w-px h-10 bg-slate-200"></div>
-              <div className="text-center">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Livrables</p>
-                <p className="text-xl font-black text-slate-800">
-                  {projet.all_livrables?.length || 0}
-                </p>
-              </div>
+            <div className="flex flex-col xl:flex-row gap-6 w-full lg:w-auto">
+                {/* BARRE DE PROGRESSION */}
+                <div className="flex-1 min-w-[280px] bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-3">
+                    <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Avancement</p>
+                        <p className="text-sm font-black text-indigo-600">{progression}%</p>
+                    </div>
+                    <div className="h-3 w-full bg-indigo-100 rounded-full overflow-hidden">
+                        <div 
+                            className="h-full bg-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(79,70,229,0.3)]"
+                            style={{ width: `${progression}%` }}
+                        ></div>
+                    </div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase text-center">{tachesTerminees} tâches complétées sur {totalTaches}</p>
+                </div>
+
+                {/* ACTIONS CP */}
+                {isChefDeProjet && (
+                    <div className="flex gap-2">
+                        <button 
+                          onClick={() => setShowWPModal(true)}
+                          className="flex-1 px-6 bg-slate-900 text-white rounded-[1.5rem] hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center gap-2 text-[10px] font-black uppercase whitespace-nowrap"
+                        >
+                            <PlusCircle size={18}/> Nouveau WP
+                        </button>
+                        <button className="p-4 bg-white border border-slate-200 text-slate-600 rounded-[1.5rem] hover:bg-slate-50 transition-all shadow-sm">
+                            <Edit3 size={18}/>
+                        </button>
+                    </div>
+                )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-8 mt-10 pt-8 border-t border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
-                <Calendar size={18} />
-              </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase">Démarrage</p>
-                <p className="text-xs font-bold text-slate-700">{new Date(projet.date_debut).toLocaleDateString()}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
-                <UserIcon size={18} />
-              </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase">Chef de Projet</p>
-                <p className="text-xs font-bold text-slate-700">{projet.chef_projet?.nom} {projet.chef_projet?.prenom}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
-                <LayoutGrid size={18} />
-              </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase">Division</p>
-                <p className="text-xs font-bold text-slate-700">{projet.division?.acronyme}</p>
-              </div>
-            </div>
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500"><Calendar size={18} /></div>
+                <div><p className="text-[8px] font-black text-slate-400 uppercase">Démarrage</p><p className="text-xs font-bold text-slate-700">{new Date(projet.date_debut).toLocaleDateString()}</p></div>
+             </div>
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600"><UserIcon size={18} /></div>
+                <div><p className="text-[8px] font-black text-slate-400 uppercase">Responsable Projet</p><p className="text-xs font-bold text-slate-700">{projet.chef_projet?.nom} {projet.chef_projet?.prenom}</p></div>
+             </div>
           </div>
         </div>
 
-        {/* ONGLETS NAVIGATION */}
+        {/* ONGLETS */}
         <div className="flex gap-10 mt-12 overflow-x-auto no-scrollbar">
           {[
             { id: "overview", label: "Vue d'ensemble", icon: <Info size={18}/> },
             { id: "tasks", label: "Plan de Travail", icon: <FolderKanban size={18}/> },
-            { id: "deliverables", label: "Livrables PDF", icon: <FileCheck size={18}/> },
+            { id: "deliverables", label: "Livrables", icon: <FileCheck size={18}/> },
+            { id: "team", label: "Équipe", icon: <Users size={18}/> },
           ].map(tab => (
-            <button
-              key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`pb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${
-                activeTab === tab.id ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`pb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab.id ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}>
               {tab.icon} {tab.label}
               {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-1.5 bg-indigo-600 rounded-full animate-in zoom-in"></div>}
             </button>
@@ -158,123 +165,111 @@ export default function ProjectDetails() {
         </div>
       </div>
 
-      {/* CONTENU DYNAMIQUE */}
+      {/* CONTENU DES ONGLETS */}
       <div className="transition-all duration-500">
-        
         {activeTab === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-6">
-            <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
-              <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-3">
-                <FileText className="text-indigo-500" />
-                Problématique & Contexte
-              </h3>
-              <div className="prose prose-slate max-w-none">
-                <p className="text-slate-600 text-lg leading-relaxed first-letter:text-5xl first-letter:font-black first-letter:text-indigo-600 first-letter:mr-3 first-letter:float-left">
-                  {projet.problematique}
-                </p>
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-6">
+                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+                    <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-3"><FileText className="text-indigo-500" /> Problématique</h3>
+                    <p className="text-slate-600 text-lg leading-relaxed">{projet.problematique}</p>
+                </div>
+                <div className="bg-indigo-900 p-10 rounded-[3rem] text-white">
+                    <h3 className="text-xl font-black mb-4">Objectifs</h3>
+                    <p className="text-indigo-200 text-sm leading-relaxed">{projet.objectifs}</p>
+                </div>
             </div>
-            <div className="bg-indigo-900 p-10 rounded-[3rem] text-white flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl font-black mb-4">Objectifs Clés</h3>
-                <p className="text-indigo-200 text-sm leading-relaxed">{projet.objectifs || "Aucun objectif spécifique défini."}</p>
-              </div>
-              <div className="mt-8 pt-8 border-t border-indigo-800">
-                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2">Nature du projet</p>
-                <p className="text-2xl font-black">{projet.nature}</p>
-              </div>
-            </div>
-          </div>
         )}
 
         {activeTab === "tasks" && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6">
-            {projet.work_packages?.map((wp) => (
-              <div key={wp.id} className="group">
-                <div className="flex items-center gap-4 mb-4 ml-4">
-                  <div className="w-12 h-px bg-slate-200"></div>
-                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{wp.code_wp} : {wp.titre}</h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {wp.taches?.map((tache) => {
-                    const isMyTask = Number(tache.responsable_id) === Number(projet.auth_user_id || myId);
-                    return (
-                      <div 
-                        key={tache.id}
-                        onClick={() => isMyTask && navigate(`/chercheur/taches/${tache.id}`)}
-                        className={`group p-8 rounded-[2.5rem] border-2 transition-all relative ${
-                          isMyTask 
-                          ? 'bg-white border-white shadow-xl shadow-slate-200/50 cursor-pointer hover:-translate-y-2 hover:border-indigo-200' 
-                          : 'bg-slate-50 border-transparent opacity-60 cursor-not-allowed'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-6">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                            isMyTask ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'
-                          }`}>
-                            {tache.etat === 'Terminé' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                          </div>
-                          {isMyTask && <ArrowRight size={18} className="text-indigo-300 group-hover:text-indigo-600 transition-colors" />}
-                          {!isMyTask && <Lock size={16} className="text-slate-300" />}
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6">
+                {projet.work_packages?.map((wp) => (
+                    <div key={wp.id} className="group">
+                        <div className="flex justify-between items-center mb-4 ml-4">
+                            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{wp.code_wp} : {wp.titre}</h4>
+                            {isChefDeProjet && (
+                                <button 
+                                  onClick={() => setShowTacheModal(wp)}
+                                  className="text-[10px] font-black text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2"
+                                >
+                                    <PlusCircle size={14}/> Ajouter une tâche
+                                </button>
+                            )}
                         </div>
-                        <h5 className={`font-black text-sm mb-2 ${isMyTask ? 'text-slate-800' : 'text-slate-400'}`}>{tache.nom}</h5>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                          {isMyTask ? "⭐ Ma Responsabilité" : tache.responsable?.nom || "Non assigné"}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {wp.taches?.map((tache) => {
+                                const isMyTask = Number(tache.responsable_id) === Number(myId);
+                                const canClick = isMyTask || isChefDeProjet;
+
+                                return (
+                                    <div key={tache.id} 
+                                         onClick={() => canClick && navigate(`/chercheur/taches/${tache.id}`)}
+                                         className={`p-8 rounded-[2.5rem] border-2 transition-all ${
+                                            canClick 
+                                            ? 'bg-white border-white shadow-xl cursor-pointer hover:-translate-y-2' 
+                                            : 'bg-slate-50 border-transparent opacity-60'
+                                         }`}>
+                                        <div className="flex justify-between mb-4">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isMyTask ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                                {tache.etat === 'Terminé' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
+                                            </div>
+                                            {isMyTask ? <ArrowRight size={18} /> : isChefDeProjet ? <Settings size={16} className="text-slate-400" /> : <Lock size={16} />}
+                                        </div>
+                                        <h5 className="font-black text-sm text-slate-800">{tache.nom}</h5>
+                                        <p className="text-[9px] text-slate-400 mt-2 uppercase font-bold tracking-wider">Responsable: {tache.responsable?.nom || 'Non assigné'}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
         )}
 
-        {activeTab === "deliverables" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-6">
-            {(projet.all_livrables || []).map((l) => {
-              const isMine = Number(l.depose_par) === Number(projet.auth_user_id || myId);
-              return (
-                <div key={l.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm group hover:shadow-2xl hover:shadow-indigo-100 transition-all border-b-4 hover:border-b-indigo-500">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
-                      <FileText size={28} />
-                    </div>
-                    {isMine && <span className="text-[8px] font-black bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full uppercase">Déposé par moi</span>}
-                  </div>
-                  <h5 className="text-lg font-black text-slate-800 leading-tight mb-4 min-h-[3rem]">{l.titre}</h5>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      <span>{l.type.replace('_', ' ')}</span>
-                      <span>{new Date(l.date_depot).toLocaleDateString()}</span>
-                    </div>
-                    
-                    {/* BOUTONS D'ACTION */}
-                    <div className="grid grid-cols-2 gap-3 pt-4">
-                      
-                      <button 
-                        onClick={() => handleDownload(l)}
-                        className="flex items-center justify-center gap-2 py-3 bg-indigo-50 text-indigo-600 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                      >
-                        <Download size={14} /> PDF
-                      </button>
-                    </div>
-                  </div>
+        {/* L'onglet Deliverables et Team restent ici ... */}
+        {activeTab === "team" && (
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm animate-in fade-in">
+                <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-xl font-black text-slate-800">Membres du projet</h3>
+                    {isChefDeProjet && (
+                        <button className="px-6 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all">
+                            Gérer l'équipe
+                        </button>
+                    )}
                 </div>
-              );
-            })}
-            
-            {(!projet.all_livrables || projet.all_livrables.length === 0) && (
-              <div className="col-span-full py-32 text-center">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
-                  <FileCheck size={40} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {projet.membres?.map(membre => (
+                        <div key={membre.id} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
+                                {membre.nom[0]}{membre.prenom[0]}
+                            </div>
+                            <div>
+                                <p className="font-black text-sm text-slate-800">{membre.prenom} {membre.nom}</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">{membre.specialite || 'Chercheur'}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Aucun livrable disponible pour le moment</p>
-              </div>
-            )}
-          </div>
+            </div>
         )}
       </div>
+
+      {/* RENDU DES MODALES CONDITIONNELLES */}
+      {showWPModal && (
+          <WorkPackageModal 
+              projet={projet} 
+              onClose={() => setShowWPModal(false)} 
+              onRefresh={fetchProjectDetails} 
+          />
+      )}
+
+      {showTacheModal && (
+          <TacheModal 
+              wp={showTacheModal} 
+              membres={projet.membres} 
+              onClose={() => setShowTacheModal(null)} 
+              onRefresh={fetchProjectDetails} 
+          />
+      )}
     </div>
   );
 }

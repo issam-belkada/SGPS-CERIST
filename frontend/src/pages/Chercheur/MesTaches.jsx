@@ -50,7 +50,7 @@ export default function MesTaches() {
         </div>
 
         <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
-          {["toutes", "En attente", "En cours", "Terminé"].map((f) => (
+          {["toutes", "A faire", "En cours", "Terminé"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -82,7 +82,7 @@ export default function MesTaches() {
         </div>
         <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 shadow-sm">
           <p className="text-[10px] font-black text-indigo-600 uppercase mb-1">À faire</p>
-          <p className="text-2xl font-black text-indigo-600">{taches.filter(t => t.etat === 'En attente').length}</p>
+          <p className="text-2xl font-black text-indigo-600">{taches.filter(t => t.etat === 'A faire').length}</p>
         </div>
       </div>
 

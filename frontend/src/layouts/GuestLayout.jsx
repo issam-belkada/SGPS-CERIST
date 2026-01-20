@@ -5,9 +5,10 @@ export default function GuestLayout() {
   const { user, token } = useStateContext();
 
   // Si l'utilisateur est déjà connecté, on redirige selon son rôle
-  if (token && user && Object.keys(user).length > 0) {
-    // Logique de redirection par rôle
-    switch (user.role) {
+  if (token) {
+    // Logique de redirection par r
+    //rôle
+    switch (user.roles[0]) {
       case "Admin":
         return <Navigate to="/admin/dashboard" replace />;
       case "CS":
