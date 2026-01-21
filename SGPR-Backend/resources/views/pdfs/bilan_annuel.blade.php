@@ -3,106 +3,177 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Bilan Projet - {{ $bilan->annee }}</title>
+    <title>Bilan Projet - {{ $bilan->projet->titre }} - {{ $bilan->annee }}</title>
     <style>
         @page {
-            margin: 2cm;
+            margin: 1.5cm;
         }
 
         body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 11pt;
-            color: #333;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9pt;
+            color: #334155;
             line-height: 1.4;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Header avec Logo */
+        /* Header moderne */
         .header {
             width: 100%;
-            border-bottom: 2px solid #1a365d;
-            padding-bottom: 10px;
+            border-bottom: 3px solid #1e293b;
+            padding-bottom: 15px;
             margin-bottom: 20px;
         }
 
-        .logo {
-            width: 180px;
+        .header table {
+            border: none;
+            margin: 0;
         }
 
-        .header-table {
-            width: 100%;
+        .header td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo {
+            width: 140px;
+            filter: grayscale(10%);
         }
 
         .header-title {
             text-align: right;
-            text-transform: uppercase;
-            color: #1a365d;
         }
 
-        /* Sections */
-        .section-header {
-            background-color: #f8fafc;
-            padding: 8px;
-            border-left: 5px solid #1a365d;
+        .header-title h2 {
+            margin: 0;
+            font-size: 16pt;
+            color: #1e293b;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            margin: 2px 0 0 0;
+            font-size: 10pt;
+            color: #64748b;
             font-weight: bold;
             text-transform: uppercase;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            font-size: 12pt;
         }
 
-        /* Tableaux */
+        /* Titres de section stylisés */
+        .section-header {
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding: 6px 10px;
+            border-left: 4px solid #1e293b;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 9.5pt;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Tableaux propres */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            table-layout: fixed;
         }
 
         th,
         td {
-            border: 1px solid #cbd5e1;
-            padding: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 8px 10px;
             text-align: left;
+            vertical-align: top;
+            word-wrap: break-word;
         }
 
         th {
             background-color: #f1f5f9;
-            font-size: 10pt;
+            font-size: 8pt;
+            color: #475569;
             text-transform: uppercase;
+            font-weight: bold;
         }
 
         .label {
+            background-color: #f8fafc;
+            width: 35%;
             font-weight: bold;
-            color: #475569;
-            width: 30%;
+            color: #334155;
         }
 
-        .content {
+        /* Style spécifique pour l'avancement */
+        .badge-progress {
+            background-color: #1e293b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Zones de texte */
+        .text-block {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            background-color: #ffffff;
+            min-height: 40px;
+            white-space: pre-line;
+            margin-bottom: 10px;
+            color: #475569;
             font-style: italic;
         }
 
+        /* Footer */
         .footer {
             position: fixed;
-            bottom: -1cm;
+            bottom: -0.8cm;
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 9pt;
+            font-size: 8pt;
             color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #f1f5f9;
             padding-top: 5px;
+        }
+
+        .empty-msg {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 8pt;
         }
     </style>
 </head>
 
 <body>
 
+    @php
+$logoPath = public_path('images/logo-cerist.png');
+$base64 = '';
+if (file_exists($logoPath)) {
+    $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+    $data = file_get_contents($logoPath);
+    $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+}
+    @endphp
+
     <div class="header">
-        <table class="header-table">
+        <table>
             <tr>
-                <td><img src="{{ public_path('images/logo-cerist.png') }}" class="logo"></td>
+                <td>
+                    @if($base64)
+                        <img src="{{ $base64 }}" class="logo">
+                    @else
+                        <span style="color:#e11d48; font-size:8pt;">Logo CERIST</span>
+                    @endif
+                </td>
                 <td class="header-title">
-                    <h2 style="margin:0;">Bilan Annuel</h2>
-                    <p style="margin:0;">Année Académique : {{ $bilan->annee }}</p>
+                    <h2>BILAN ANNUEL DE PROJET {{ $bilan->projet->titre }}</h2>
+                    <p>SESSION ACADÉMIQUE {{ $bilan->annee }}</p>
                 </td>
             </tr>
         </table>
@@ -111,7 +182,7 @@
     <div class="section-header">1. Structure de Rattachement</div>
     <table>
         <tr>
-            <td class="label">Division / Département</td>
+            <td class="label">Division</td>
             <td>{{ $bilan->projet->division->nom }} ({{ $bilan->projet->division->acronyme }})</td>
         </tr>
     </table>
@@ -120,115 +191,153 @@
     <table>
         <tr>
             <td class="label">Intitulé du projet</td>
-            <td class="content">{{ $bilan->projet->titre }}</td>
+            <td style="color: #1e293b; font-weight: bold;">{{ $bilan->projet->titre }}</td>
         </tr>
         <tr>
             <td class="label">Chef de projet</td>
             <td>{{ $bilan->projet->chefProjet->nom }} {{ $bilan->projet->chefProjet->prenom }}</td>
         </tr>
         <tr>
-            <td class="label">Type / Nature</td>
-            <td>{{ $bilan->projet->type }} / {{ $bilan->projet->nature }}</td>
+            <td class="label">Type</td>
+            <td>{{ $bilan->projet->type }}</td>
         </tr>
         <tr>
-            <td class="label">Dates</td>
-            <td>Du {{ \Carbon\Carbon::parse($bilan->projet->date_debut)->format('d/m/Y') }} au
-                {{ \Carbon\Carbon::parse($bilan->projet->date_fin)->format('d/m/Y') }}</td>
+            <td class="label">Nature</td>
+            <td>{{ $bilan->projet->nature }}</td>
         </tr>
         <tr>
-            <td class="label">État d'avancement</td>
-            <td style="font-weight:bold; color:#1a365d;">{{ $bilan->avancement_physique }} %</td>
+            <td class="label">Période de validité</td>
+            <td>
+                Du {{ \Carbon\Carbon::parse($bilan->projet->date_debut)->format('d/m/Y') }}
+                au {{ \Carbon\Carbon::parse($bilan->projet->date_fin)->format('d/m/Y') }}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">État d'avancement physique</td>
+            <td><span class="badge-progress">{{ $bilan->avancement_physique }}%</span></td>
         </tr>
     </table>
 
-    <h4 style="margin-bottom: 5px; color:#1a365d;">Participants au projet :</h4>
+    <p style="font-weight: bold; margin: 15px 0 5px 0; color: #1e293b; font-size: 9pt;">Liste des participants :</p>
     <table>
         <thead>
             <tr>
-                <th>NOM et Prénom</th>
-                <th>Grade</th>
-                <th>Qualité</th>
-                <th>% Participation</th>
+                <th style="width: 30%;">Nom & Prénom</th>
+                <th style="width: 20%;">Grade</th>
+                <th style="width: 30%;">Qualité</th>
+                <th style="width: 20%;">Participation</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($bilan->projet->membres as $membre)
+            @foreach($bilan->projet->membres as $m)
                 <tr>
-                    <td>{{ $membre->nom }} {{ $membre->prenom }}</td>
-                    <td>{{ $membre->grade }}</td>
-                    <td>{{ $membre->pivot->qualite }}</td>
-                    <td>{{ $membre->pivot->pourcentage_participation }}%</td>
+                    <td>{{ $m->nom }} {{ $m->prenom }}</td>
+                    <td>{{ $m->grade }}</td>
+                    <td>{{ $m->pivot->qualite }}</td>
+                    <td style="text-align: center;">{{ $m->pivot->pourcentage_participation }}%</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <div class="section-header">3. Objectifs Réalisés</div>
-    <div style="padding: 10px; border: 1px solid #e2e8f0; background: #fff;">
-        {!! nl2br(e($bilan->objectifs_realises)) !!}
-    </div>
+    <div class="section-header">3. Objectifs du projet</div>
+    <div class="text-block">{{ $bilan->objectifs_realises ?: 'Aucun objectif renseigné.' }}</div>
 
     <div class="section-header">4. Résultats Quantifiés</div>
 
-    <h4>4.1 Production Scientifique</h4>
+    <p style="font-weight: bold; margin: 10px 0 5px 0;">4.1 Production Scientifique</p>
     @if($bilan->productionsScientifiques->count() > 0)
-        @foreach($bilan->productionsScientifiques as $prod)
-            <p style="font-size: 10pt; margin-left: 15px;">• <strong>[{{ $prod->type }}]</strong> {{ $prod->titre }} -
-                <em>{{ $prod->revue_ou_conference }}</em> ({{ $prod->date_parution }})</p>
-        @endforeach
-    @else
-        <p>Néant</p>
-    @endif
-
-    <h4>4.2 Production Technologique</h4>
-    @if($bilan->productionsTechnologiques->count() > 0)
-        @foreach($bilan->productionsTechnologiques as $tech)
-            <div style="margin-left: 15px; margin-bottom: 10px;">
-                <strong>{{ $tech->intitule }} ({{ $tech->type }})</strong><br>
-                <small>{{ $tech->description }}</small>
-            </div>
-        @endforeach
-    @else
-        <p>Néant</p>
-    @endif
-
-    <h4>4.3 Formation pour la recherche (Encadrements)</h4>
-    @if($bilan->encadrements->count() > 0)
         <table>
             <thead>
                 <tr>
-                    <th>Étudiant</th>
-                    <th>Diplôme</th>
-                    <th>Établissement</th>
-                    <th>État d'avancement</th>
+                    <th style="width: 20%;">Type</th>
+                    <th>Détails bibliographiques</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($bilan->encadrements as $enc)
+                @foreach($bilan->productionsScientifiques as $ps)
                     <tr>
-                        <td>{{ $enc->nom_etudiant }}</td>
-                        <td>{{ $enc->type_diplome }}</td>
-                        <td>{{ $enc->etablissement }}</td>
-                        <td>{{ $enc->etat_avancement }}</td>
+                        <td style="font-weight: bold;">{{ $ps->type }}</td>
+                        <td><strong>{{ $ps->titre }}</strong>. {{ $ps->revue_ou_conference }}, {{ $ps->date_parution }}.</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     @else
-        <p>Néant</p>
+        <p class="empty-msg">Aucune production scientifique signalée.</p>
     @endif
 
-    <div class="section-header">5. Difficultés Rencontrées</div>
-    <ul>
-        <li><strong>Scientifiques :</strong> {{ $bilan->difficultes_scientifiques ?: 'Néant' }}</li>
-        <li><strong>Matérielles :</strong> {{ $bilan->difficultes_materielles ?: 'Néant' }}</li>
-        <li><strong>Humaines :</strong> {{ $bilan->difficultes_humaines ?: 'Néant' }}</li>
-    </ul>
+    <p style="font-weight: bold; margin: 10px 0 5px 0;">4.2 Production Technologique</p>
+    @if($bilan->productionsTechnologiques->count() > 0)
+        <table>
+            @foreach($bilan->productionsTechnologiques as $pt)
+                <tr>
+                    <td class="label" style="width: 25%;">{{ $pt->type }}</td>
+                    <td><strong>{{ $pt->intitule }}</strong> : {{ $pt->description }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @else
+        <p class="empty-msg">Aucune production technologique signalée.</p>
+    @endif
+
+    <p style="font-weight: bold; margin: 10px 0 5px 0;">4.3 Formation pour la recherche (Encadrements)</p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Étudiant</th>
+                <th style="width: 15%;">Diplôme</th>
+                <th style="width: 30%;">Sujet de recherche</th>
+                <th style="width: 20%;">Établissement</th>
+                <th style="width: 15%;">Avancement</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($bilan->encadrements as $e)
+                <tr>
+                    <td>{{ $e->nom_etudiant }}</td>
+                    <td>{{ $e->type_diplome }}</td>
+                    <td>{{ $e->sujet ?: 'N/A' }}</td>
+                    <td>{{ $e->etablissement ?: 'N/A' }}</td>
+                    <td>{{ $e->etat_avancement }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" style="text-align: center;" class="empty-msg">Aucun encadrement.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div class="section-header">5. Collaboration & Difficultés</div>
+    <p style="font-weight: bold; margin: 5px 0;">Collaborations :</p>
+    <div class="text-block">{{ $bilan->collaborations ?: 'Néant.' }}</div>
+
+    <table>
+        <tr>
+            <td class="label">Difficultés Scientifiques</td>
+            <td>{{ $bilan->difficultes_scientifiques ?: 'Néant' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Difficultés Matérielles</td>
+            <td>{{ $bilan->difficultes_materielles ?: 'Néant' }}</td>
+        </tr>
+    </table>
 
     <div class="footer">
-        Document généré via SGPR-CERIST le {{ date('d/m/Y') }} - Page <span class="pagenum"></span>
+        CERIST - Système de Gestion des Projets de Recherche (SGPR) — Page
+        <script type="text/php">
+            if (isset($pdf)) {
+                $text = "{PAGE_NUM} / {PAGE_COUNT}";
+                $size = 7;
+                $font = $fontMetrics->getFont("helvetica");
+                $width = $fontMetrics->get_text_width($text, $font, $size) / 2;
+                $x = ($pdf->get_width() - $width) / 2;
+                $y = $pdf->get_height() - 35;
+                $pdf->page_text($x, $y, $text, $font, $size);
+            }
+        </script>
     </div>
-
 </body>
 
 </html>
