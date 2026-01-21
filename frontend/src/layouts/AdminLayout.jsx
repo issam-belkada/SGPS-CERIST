@@ -14,8 +14,9 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   if (!token) return <Navigate to="/login" replace />;
-  if (user.roles[0] !== "Admin") return <Navigate to="/unauthorized" replace />;
   
+  if (user.roles[0] !== "Admin") return <Navigate to="/unauthorized" replace />;
+
   if (!user) return (
     <div className="h-screen flex items-center justify-center bg-white font-black text-slate-400 uppercase tracking-widest text-xs">
       Chargement du système...

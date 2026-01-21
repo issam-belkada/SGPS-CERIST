@@ -34,9 +34,9 @@ import VisualisationBilan from "./pages/Chercheur/VisualisationBilan";
 
 import DashboardDivision from "./pages/Division/DashboardDivision";
 import Propositions from "./pages/Division/Propositions";
-import ValidationBilans from "./pages/Division/ValidationBilans";
 import ListeProjetsDivision from "./pages/Division/ListeProjetsDivision";
 import MembresDivision from "./pages/Division/MembresDivision";
+import SuiviBilans from "./pages/Division/SuiviBilans";
 
 const router = createBrowserRouter([
   {
@@ -83,7 +83,7 @@ const router = createBrowserRouter([
     { index: true, element: <Navigate to="/division/dashboard" replace /> },
     { path: "dashboard", element: <DashboardDivision /> },
     { path: "propositions", element: <Propositions /> },
-    { path: "suivi-bilans", element: <ValidationBilans /> },
+    { path: "suivi-bilans", element: <SuiviBilans /> },
     { path: "projets", element: <ListeProjetsDivision /> },
     { path: "projet/:id", element: <ProjectDetails /> },
     { path: "membres-structures", element: <MembresDivision /> },

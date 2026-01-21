@@ -176,31 +176,84 @@ class BilanController extends Controller
     /**
      * Valider le bilan au niveau de la Division
      */
-    public function validerDivision(BilanAnnuel $bilan)
-    {
-        // Sécurité : Seul le chef de division du projet peut valider
-        if (auth()->user()->division_id !== $bilan->projet->division_id || !auth()->user()->hasRole('ChefDivision')) {
-            return response()->json(['error' => 'Non autorisé'], 403);
-        }
-    
-        $bilan->update(['etat_validation' => 'Validé']);
-    
-        return response()->json(['message' => 'Bilan validé par la division avec succès.']);
+    public function validerBilan(Request $request, $id)
+{
+    // On accepte "Valide" (système) ou "Validé" (humain)
+    $request->validate([
+        'etat_validation' => 'required|in:Validé,Rejeté,Valide,Rejete',
+    ]);
+
+    try {
+        DB::beginTransaction();
+        $bilan = BilanAnnuel::findOrFail($id);
+
+        // Conversion vers la valeur exacte de votre ENUM migration ('Validé')
+        // Mais pour plus de sécurité avec Postgres, on force le format texte
+        $newStatus = ($request->etat_validation === 'Valide') ? 'Validé' : 
+                     (($request->etat_validation === 'Rejete') ? 'Rejeté' : $request->etat_validation);
+
+        $bilan->etat_validation = $newStatus;
+        $bilan->save();
+
+        DB::commit();
+
+        return response()->json([
+            'message' => "Statut mis à jour avec succès.",
+            'bilan' => $bilan
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'message' => "Erreur SQL lors de la validation.",
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
-     * Rejeter le bilan pour correction
+     * Récupérer les bilans soumis de la division du chef actuel
      */
-    public function rejeter(Request $request, BilanAnnuel $bilan)
-    {
-        $request->validate(['commentaire' => 'required|string']);
-    
-        // Le bilan repasse en brouillon pour que le chercheur puisse le modifier
-        $bilan->update([
-            'etat_validation' => 'Rejeté',
-            'autres_resultats' => $bilan->autres_resultats . "\n\n[Note de rejet] : " . $request->commentaire 
-        ]);
-    
-        return response()->json(['message' => 'Bilan renvoyé au chercheur pour corrections.']);
+    public function getBilansASoumettre()
+{
+    try {
+        $user = auth()->user();
+
+        // On récupère les bilans avec EXACTEMENT les mêmes relations que show($id)
+        $bilans = BilanAnnuel::with([
+            // Section 1 & 2 : Projet et sa structure de rattachement
+            'projet.division', 
+            'projet.chefProjet',
+            
+            // Section 2 : Participants (via la table pivot participation)
+            'projet.membres' => function($query) {
+                $query->withPivot('pourcentage_participation', 'qualite');
+            },
+
+            // Section 4.1 : Production Scientifique
+            'productionsScientifiques',
+
+            // Section 4.2 : Production Technologique
+            'productionsTechnologiques',
+
+            // Section 4.3 : Formation (Encadrements)
+            'encadrements'
+        ])
+        ->whereHas('projet', function($query) use ($user) {
+            // Filtrage par la division du Chef de Division actuel
+            $query->where('division_id', $user->division_id);
+        })
+        ->where('etat_validation', 'Soumis')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+        return response()->json($bilans, 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Erreur lors de la récupération des bilans à valider.',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 }

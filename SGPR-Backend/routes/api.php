@@ -80,6 +80,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projets/{projet}/bilans', [BilanController::class, 'index']);
     // 1. Sauvegarder ou modifier le brouillon
     Route::post('/projets/{projet}/bilan/sauvegarder', [BilanController::class, 'storeOuUpdate']);
+
+    Route::get('/division/bilans-a-valider', [BilanController::class, 'getBilansASoumettre']);
+    
+    // Route pour l'action de validation/rejet
+    Route::put('/bilans/{id}/valider', [BilanController::class, 'validerBilan']);
     // 2. Action de soumission finale
     Route::patch('/bilans/{bilan}/soumettre', [BilanController::class, 'soumettre']);
     // 3. Téléchargement

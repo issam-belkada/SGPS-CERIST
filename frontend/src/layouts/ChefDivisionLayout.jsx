@@ -11,6 +11,8 @@ import {
 export default function ChefDivisionLayout() {
   const { user, token, setUser, setToken } = useStateContext();
 
+
+  if (!token) return <Navigate to="/login" />;
   if (user.roles[0] !== "ChefDivision") return <Navigate to="/unauthorized" replace />;
 
   if (!user) {
@@ -41,7 +43,7 @@ export default function ChefDivisionLayout() {
   const links = [
     { label: "Vue d'ensemble", path: "/division/dashboard", icon: <LayoutGrid size={20} /> },
     { label: "Propositions", path: "/division/propositions", icon: <ClipboardList size={20} /> },
-    { label: "Validation Bilans", path: "/division/suivi-bilans", icon: <CheckCircle2 size={20} /> },
+    { label: "Suivi Bilans", path: "/division/suivi-bilans", icon: <CheckCircle2 size={20} /> },
     { label: "Rapports Division", path: "/division/rapport-division", icon: <FileStack size={20} /> },
     { label: "Équipe & Projets", path: "/division/membres-structures", icon: <Users2 size={20} /> },
   ];
