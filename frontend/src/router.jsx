@@ -27,6 +27,8 @@ import MesProjets from "./pages/Chercheur/MesProjets";
 import TacheDetails from "./pages/Chercheur/TacheDetails";
 import LivrableModal from "./pages/Chercheur/LivrableModal";
 import BilanPage from "./pages/Chercheur/BilanPage";
+import ListeBilansProjet from "./pages/Chercheur/ListeBilansProjet";
+import VisualisationBilan from "./pages/Chercheur/VisualisationBilan";
 
 const router = createBrowserRouter([
   {
@@ -87,7 +89,9 @@ const router = createBrowserRouter([
       { path: "ma-division", element: <MaDivision /> },
       { path: 'taches/:id', element: <TacheDetails /> },
         { path: "taches/:id/ajouter-livrable", element: <LivrableModal /> },
-        { path: "projets/:id/bilan" , element: <BilanPage/> },
+        { path: "projets/:projetId/bilans-liste", element: <ListeBilansProjet /> },
+{ path: "projets/:projetId/bilan", element: <BilanPage /> },
+{ path: "projets/:projetId/bilans/:bilanId", element: <VisualisationBilan /> },
     ],
   },
 

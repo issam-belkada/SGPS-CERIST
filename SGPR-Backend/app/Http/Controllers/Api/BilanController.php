@@ -10,8 +10,34 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+
+
 class BilanController extends Controller
 {
+
+
+    public function index($projetId)
+{
+    // Sécurité au cas où le JS envoie "undefined" comme chaîne
+    if ($projetId === 'undefined') {
+        return response()->json(['error' => 'ID Projet non fourni'], 400);
+    }
+
+    $projet = Projet::findOrFail($projetId);
+
+    $bilans = BilanAnnuel::where('projet_id', $projet->id)
+        ->with(['productionsScientifiques', 'productionsTechnologiques', 'encadrements'])
+        ->orderBy('annee', 'desc')
+        ->get();
+
+    return response()->json($bilans);
+}
+
+
+
+
+
+
     
     public function storeOuUpdate(Request $request, Projet $projet)
 {
@@ -91,24 +117,20 @@ class BilanController extends Controller
      * Générer le PDF (uniquement si le bilan existe)
      */
     public function telechargerPDF(BilanAnnuel $bilan)
-    {
-        $projet = $bilan->projet->load(['chefProjet', 'division', 'membres.division']);
-        
-        $productionsSci = $projet->productionsScientifiques()->where('annee', $bilan->annee)->get(); 
-        $productionsTech = $projet->productionsTechnologiques()->where('annee', $bilan->annee)->get(); 
-        $encadrements = $bilan->encadrements;
+{
+    // Chargez tout via le bilan pour être sûr de la cohérence avec l'année
+    $bilan->load(['productionsScientifiques', 'productionsTechnologiques', 'encadrements', 'projet.chefProjet']);
+    
+    $pdf = Pdf::loadView('pdfs.bilan', [
+        'bilan'           => $bilan,
+        'projet'          => $bilan->projet,
+        'productionsSci'  => $bilan->productionsScientifiques,
+        'productionsTech' => $bilan->productionsTechnologiques,
+        'encadrements'    => $bilan->encadrements
+    ]);
 
-        $pdf = Pdf::loadView('pdfs.bilan', [
-        'bilan' => $bilan,
-        'projet' => $projet,
-        'annee' => $bilan->annee,
-        'productionsSci' => $productionsSci,
-        'productionsTech' => $productionsTech,
-        'encadrements' => $encadrements
-]);
-
-        return $pdf->setPaper('a4', 'portrait')->download("Bilan_{$projet->id}.pdf");
-    }
+    return $pdf->setPaper('a4', 'portrait')->download("Bilan_{$bilan->annee}.pdf");
+}
 
 
     /**
