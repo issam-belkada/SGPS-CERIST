@@ -36,6 +36,45 @@ class BilanController extends Controller
 
 
 
+    public function show($id)
+    {
+        try {
+            // Chargement de toutes les relations définies dans vos modèles
+            $bilan = BilanAnnuel::with([
+                // Section 1 & 2 : Projet et sa structure de rattachement
+                'projet.division', 
+                'projet.chefProjet',
+                
+                // Section 2 : Participants (via la table pivot participation)
+                'projet.membres' => function($query) {
+                    $query->withPivot('pourcentage_participation', 'qualite');
+                },
+
+                // Section 4.1 : Production Scientifique
+                'productionsScientifiques',
+
+                // Section 4.2 : Production Technologique
+                'productionsTechnologiques',
+
+                // Section 4.3 : Formation (Encadrements)
+                'encadrements'
+            ])->findOrFail($id);
+
+            return response()->json($bilan, 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Bilan introuvable.'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la récupération des données.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 
 
     
@@ -93,43 +132,44 @@ class BilanController extends Controller
      */
     public function soumettre(BilanAnnuel $bilan)
     {
-        // Vérification que l'utilisateur est bien le chef du projet lié au bilan
-        if (auth()->id() !== $bilan->projet->chef_projet_id) {
-            return response()->json(['error' => 'Non autorisé'], 403);
+        if ($bilan->etat_validation !== 'Brouillon') {
+            return response()->json(['message' => 'Seuls les brouillons peuvent être soumis.'], 422);
         }
 
-        if (!in_array($bilan->etat_validation, ['Brouillon', 'Rejeté'])) {
-        return response()->json(['error' => 'Ce bilan ne peut pas être soumis (déjà validé ou en cours).'], 400);
-        }
-
-        $bilan->update([
-            'etat_validation' => 'Soumis',
-            'updated_at' => now()
-        ]);
+        $bilan->update(['etat_validation' => 'Soumis']);
 
         return response()->json([
-            'message' => 'Bilan soumis officiellement à la division',
-            'bilan' => $bilan
+            'message' => 'Bilan soumis avec succès au chef de projet/division.',
+            'etat' => 'Soumis'
         ]);
     }
 
     /**
-     * Générer le PDF (uniquement si le bilan existe)
+     * Génère et télécharge le PDF basé sur le canevas officiel
      */
     public function telechargerPDF(BilanAnnuel $bilan)
 {
-    // Chargez tout via le bilan pour être sûr de la cohérence avec l'année
-    $bilan->load(['productionsScientifiques', 'productionsTechnologiques', 'encadrements', 'projet.chefProjet']);
-    
-    $pdf = Pdf::loadView('pdfs.bilan', [
-        'bilan'           => $bilan,
-        'projet'          => $bilan->projet,
-        'productionsSci'  => $bilan->productionsScientifiques,
-        'productionsTech' => $bilan->productionsTechnologiques,
-        'encadrements'    => $bilan->encadrements
+    $bilan->load([
+        'projet.division', 
+        'projet.chefProjet', 
+        'projet.membres', 
+        'productionsScientifiques', 
+        'productionsTechnologiques', 
+        'encadrements'
     ]);
 
-    return $pdf->setPaper('a4', 'portrait')->download("Bilan_{$bilan->annee}.pdf");
+    // Configuration pour supporter les images et les caractères spéciaux
+    $pdf = Pdf::loadView('pdfs.bilan_annuel', compact('bilan'))
+              ->setPaper('a4', 'portrait')
+              ->setOptions([
+                  'isRemoteEnabled' => true,      // Permet de charger des images via URL si besoin
+                  'isHtml5ParserEnabled' => true,
+                  'defaultFont' => 'sans-serif'
+              ]);
+
+    $fileName = "Bilan_" . $bilan->annee . "_" . str_replace(' ', '_', $bilan->projet->titre) . ".pdf";
+
+    return $pdf->download($fileName);
 }
 
 

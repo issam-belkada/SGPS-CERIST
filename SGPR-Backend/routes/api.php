@@ -73,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Processus de Bilan
 
-    Route::get('/bilans/{bilan}', [BilanController::class, 'show']);
+    Route::get('/bilans/{id}', [BilanController::class, 'show']);
     Route::get('/projets/{projet}/bilans', [BilanController::class, 'index']);
     // 1. Sauvegarder ou modifier le brouillon
     Route::post('/projets/{projet}/bilan/sauvegarder', [BilanController::class, 'storeOuUpdate']);
